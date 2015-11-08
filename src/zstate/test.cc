@@ -37,6 +37,12 @@ static void get_log(librados::IoCtx& ioctx, zlog::Log& log, std::string name,
   ASSERT_EQ(ret, 0);
 }
 
+static void get_stream(zlog::Log& log, uint64_t stream_id, zlog::Log::Stream& stream)
+{
+  int ret = log.OpenStream(stream_id, stream);
+  ASSERT_EQ(ret, 0);
+}
+
 TEST(Register, DefaultValue) {
   librados::Rados rados;
   librados::IoCtx ioctx;
@@ -49,10 +55,13 @@ TEST(Register, DefaultValue) {
   zlog::Log log;
   get_log(ioctx, log, log_name, &client);
 
-  Register reg(log);
+  zlog::Log::Stream stream;
+  get_stream(log, 0, stream);
+
+  Register reg(&stream);
 
   int value;
-  ASSERT_EQ(0, reg.read(&value));
+  ASSERT_EQ(0, reg.Read(&value));
   ASSERT_EQ(0, value);
 }
 
@@ -69,16 +78,19 @@ TEST(Register, Basic) {
   zlog::Log log;
   get_log(ioctx, log, log_name, &client);
 
-  Register reg(log);
+  zlog::Log::Stream stream;
+  get_stream(log, 0, stream);
+
+  Register reg(&stream);
 
   int value;
-  ASSERT_EQ(0, reg.write(5));
-  ASSERT_EQ(0, reg.read(&value));
+  ASSERT_EQ(0, reg.Write(5));
+  ASSERT_EQ(0, reg.Read(&value));
   ASSERT_EQ(5, value);
-  ASSERT_EQ(0, reg.write(5));
-  ASSERT_EQ(0, reg.write(500));
-  ASSERT_EQ(0, reg.write(333));
-  ASSERT_EQ(0, reg.read(&value));
+  ASSERT_EQ(0, reg.Write(5));
+  ASSERT_EQ(0, reg.Write(500));
+  ASSERT_EQ(0, reg.Write(333));
+  ASSERT_EQ(0, reg.Read(&value));
   ASSERT_EQ(333, value);
 }
 
@@ -93,12 +105,15 @@ static void thrash_log(librados::Rados *rados, std::string pool_name, std::strin
   zlog::Log log;
   get_log(ioctx, log, log_name, &client);
 
-  Register reg(log);
+  zlog::Log::Stream stream;
+  get_stream(log, 0, stream);
+
+  Register reg(&stream);
 
   for (int i = 0; i < 100; i++) {
     int value = std::rand() + 1; // ensure positive
-    ASSERT_EQ(0, reg.write(value));
-    ASSERT_EQ(0, reg.read(&value));
+    ASSERT_EQ(0, reg.Write(value));
+    ASSERT_EQ(0, reg.Read(&value));
   }
 }
 
@@ -131,13 +146,16 @@ TEST(Register, MultiThreaded) {
   for (auto it = threads.begin(); it != threads.end(); it++)
     it->join();
 
-  Register reg(log);
+  zlog::Log::Stream stream;
+  get_stream(log, 0, stream);
+
+  Register reg(&stream);
 
   int value;
-  ASSERT_EQ(0, reg.read(&value));
+  ASSERT_EQ(0, reg.Read(&value));
   ASSERT_LT(0, value);
 
-  ASSERT_EQ(0, reg.write(10));
-  ASSERT_EQ(0, reg.read(&value));
+  ASSERT_EQ(0, reg.Write(10));
+  ASSERT_EQ(0, reg.Read(&value));
   ASSERT_EQ(10, value);
 }

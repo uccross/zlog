@@ -2,49 +2,53 @@
 #include "../libzlog.hpp"
 #include "skytype.h"
 
-using namespace skytype;
+namespace skytype {
 
-int SkyObject::update_helper(const void *data, size_t size)
+SkyObject::SkyObject(zlog::Log::Stream *stream) :
+  stream_(stream)
 {
-  ceph::bufferptr bp((char*)data, size);
-  ceph::bufferlist bl;
-  bl.push_back(bp);
-
-  int ret = log_.Append(bl);
-  if (ret)
-    return ret;
-
-  return 0;
+  int ret = stream_->Reset();
+  assert(!ret);
+  log_ = stream_->GetLog();
 }
 
-int SkyObject::query_helper()
+int SkyObject::UpdateHelper(ceph::bufferlist& bl)
 {
-  uint64_t tail;
-  int ret = log_.CheckTail(&tail);
+  int ret = stream_->Append(bl);
+  return ret;
+}
+
+int SkyObject::QueryHelper()
+{
+  int ret = stream_->Sync();
   if (ret)
     return ret;
 
-  while (position_ <= tail) {
+  for (;;) {
+    uint64_t pos;
     ceph::bufferlist bl;
-    ret = log_.Read(position_, bl);
+    ret = stream_->ReadNext(bl, &pos);
     switch (ret) {
       case 0:
-        apply(bl.c_str());
+        Apply(bl, pos);
         break;
-      case -ENODEV:
-        ret = log_.Fill(position_);
-        if (ret == -EROFS)
-          continue; // try again
-        else if (ret)
-          return ret;
-        break;
-      case -EFAULT:
-        break;
-      default:
-        assert(0);
-    }
-    position_++;
-  }
 
-  return 0;
+      case -EBADF:
+        return 0; // end of stream
+
+      case -ENODEV:
+        ret = log_->Fill(pos);
+        if (!ret || ret == -EROFS)
+          break; // try again
+        return ret;
+
+      case -EFAULT:
+        break; // skip entry
+
+      default:
+        return ret;
+    }
+  }
+}
+
 }

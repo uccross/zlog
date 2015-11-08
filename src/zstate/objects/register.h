@@ -6,27 +6,32 @@
 #include "zstate/skytype.h"
 
 class Register : private skytype::SkyObject {
-  public:
-    Register(zlog::Log& log) : SkyObject(log), state_(0) {}
+ public:
+  Register(zlog::Log::Stream *log) :
+    SkyObject(log), state_(0)
+  {}
 
-    int read(int *value) {
-      int ret = query_helper();
-      if (ret)
-        return ret;
-      *value = state_;
-      return 0;
-    }
+  int Read(int *value) {
+    int ret = QueryHelper();
+    if (ret)
+      return ret;
+    *value = state_;
+    return 0;
+  }
 
-    int write(int value) {
-      return update_helper(&value, sizeof(int));
-    }
+  int Write(int value) {
+    ceph::bufferlist bl;
+    bl.append((char*)&value, sizeof(value));
+    return UpdateHelper(bl);
+  }
 
-  private:
-    int state_;
+ private:
+  int state_;
 
-    void apply(const void *data) {
-      state_ = *(int*)data;
-    }
+  void Apply(ceph::bufferlist& bl, uint64_t position) {
+    int *data = (int*)bl.c_str();
+    state_ = *data;
+  }
 };
 
 #endif
