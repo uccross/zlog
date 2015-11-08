@@ -175,7 +175,11 @@ int Log::Stream::ReadNext(ceph::bufferlist& bl, uint64_t *pposition)
 
   assert(!impl->pos.empty());
 
-  uint64_t pos = *impl->curpos;
+  const uint64_t pos = *impl->curpos;
+
+  // return position to caller so they can fill
+  if (pposition)
+    *pposition = pos;
 
   ceph::bufferlist bl_out;
   int ret = impl->log->Read(pos, bl_out);
@@ -193,9 +197,6 @@ int Log::Stream::ReadNext(ceph::bufferlist& bl, uint64_t *pposition)
   // FIXME: how to create this view more efficiently?
   const char *data = bl_out.c_str();
   bl.append(data + header_size, bl_out.length() - header_size);
-
-  if (pposition)
-    *pposition = pos;
 
   impl->prevpos = impl->curpos;
   impl->curpos++;
