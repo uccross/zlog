@@ -142,6 +142,12 @@ struct Log::Stream::StreamImpl {
   std::set<uint64_t>::const_iterator curpos;
 };
 
+Log *Log::Stream::GetLog()
+{
+  Log::Stream::StreamImpl *impl = this->impl;
+  return impl->log;
+}
+
 std::vector<uint64_t> Log::Stream::History() const
 {
   Log::Stream::StreamImpl *impl = this->impl;

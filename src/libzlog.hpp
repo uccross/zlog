@@ -74,6 +74,7 @@ class Log {
     int ReadNext(ceph::bufferlist& bl, uint64_t *pposition = NULL);
     int Reset();
     int Sync();
+    Log *GetLog();
     uint64_t Id() const;
 
     std::vector<uint64_t> History() const;
