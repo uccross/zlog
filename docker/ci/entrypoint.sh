@@ -31,3 +31,4 @@ cd /src/zlog/src
 export CEPH_CONF=/tmp/ceph/ceph.conf
 ./zlog-seqr --port 5678 --daemon
 ./test
+./zstate-test
