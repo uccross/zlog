@@ -63,6 +63,32 @@ int SkyObject::QueryHelper(SkyObject::Transaction& txn)
  *     - This is when a client is playing back a log and encounters a commit
  *     record that contains a write to an object that it doesn't locally host.
  *     - Update local objects, ignore updates to objects that it doesn't host.
+ *
+ * - Remote reads at the consuming client
+ *     - Sees a commit record with a read set that contains an object that the
+ *     consuming client doesn't locally host. So it can't compute commit/abort
+ *     decision.
+ *
+ *     - Solution is to have the generating client immediately play the log
+ *     forward until the commit point when it commits a transaction. Using the
+ *     local commit/abort decision a decision record is appended to the same
+ *     set of stream.
+ *
+ *     - Consuming clients that see the commit record wait for the decision
+ *     record.
+ *
+ *     - Current implementation requires develoeprs to mark objects as
+ *     requiring decision recods. Some sort of dynamic scheme might be
+ *     possible later.
+ *
+ * - Remote reads at the generating client
+ *     - Not supported.
+ *     - Would require an RPC
+ *     - Collaborative conflict resolution.
+ *
+ * - Decision record is optimization. Another client hosting read set can
+ *   produce it. Or if needed, any client can reconstruct the state to make
+ *   the decision.
  */
 int SkyObject::QueryHelper()
 {
