@@ -186,7 +186,7 @@ TEST(DB, EquivHistory) {
         txn->Delete(key);
       }
     }
-    txn->Commit();
+    ASSERT_TRUE(txn->Commit());
 
     truth_history.push_back(truth);
     db_history.push_back(db->GetSnapshot());
@@ -221,7 +221,7 @@ TEST(DB, Iterator) {
   for (auto s : strs) {
     auto txn = db->BeginTransaction();
     txn->Put(s, "");
-    txn->Commit();
+    ASSERT_TRUE(txn->Commit());
   }
 
   auto it = db->NewIterator();

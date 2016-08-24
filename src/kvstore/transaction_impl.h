@@ -20,7 +20,7 @@ class TransactionImpl : public Transaction {
   void Put(const std::string& key, const std::string& val);
   void Delete(std::string key);
 
-  void Commit();
+  bool Commit();
 
  private:
   DBImpl *db_;

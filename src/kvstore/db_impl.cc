@@ -320,7 +320,7 @@ void DBImpl::process_log_entry()
     // meld-subset: only allow serial intentions
     if (i.snapshot() == -1) assert(next == 0);
     if (i.snapshot() != -1) assert(next > 0);
-    if (i.snapshot() == (int64_t)last_pos_) {
+    if (i.snapshot() == (int64_t)root_pos_) {
       auto root = cache_.CacheIntention(i, next);
       validate_rb_tree(root);
       root_ = root;

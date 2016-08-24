@@ -479,11 +479,11 @@ void TransactionImpl::Delete(std::string key)
   root_ = root;
 }
 
-void TransactionImpl::Commit()
+bool TransactionImpl::Commit()
 {
   // nothing to do
   if (root_ == nullptr) {
-    return;
+    return true;
   }
 
   // build the intention and fixup field offsets
@@ -514,5 +514,5 @@ void TransactionImpl::Commit()
 
   // wait for result
   bool committed = db_->CommitResult(pos);
-  assert(committed);
+  return committed;
 }
