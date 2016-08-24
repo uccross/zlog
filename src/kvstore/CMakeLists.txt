@@ -9,6 +9,7 @@ target_include_directories(kvstore_proto
 
 add_library(libkvstore SHARED
     db_impl.cc
+    intention.cc
     transaction_impl.cc
     node_cache.cc
     iterator_impl.cc
