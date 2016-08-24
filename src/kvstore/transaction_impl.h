@@ -13,8 +13,8 @@ class DBImpl;
  */
 class TransactionImpl : public Transaction {
  public:
-  TransactionImpl(DBImpl *db, NodeRef root, uint64_t snapshot, uint64_t rid) :
-    db_(db), src_root_(root), snapshot_(snapshot), rid_(rid), root_(nullptr)
+  TransactionImpl(DBImpl *db, const std::shared_ptr<NodePtr>& snapshot, uint64_t rid) :
+    db_(db), snapshot_(snapshot), rid_(rid), root_(nullptr)
   {}
 
   void Put(const std::string& key, const std::string& val);
@@ -24,10 +24,13 @@ class TransactionImpl : public Transaction {
 
  private:
   DBImpl *db_;
-  // root that transaction started with
-  const NodeRef src_root_;
-  const uint64_t snapshot_;
+  const std::shared_ptr<const NodePtr> snapshot_;
+
   const uint64_t rid_;
+
+  // we don't use ptr here because the intention is built in isolation and
+  // isn't subject to being removed from memory like other nodes that can be
+  // removed from in-memory cache.
   NodeRef root_;
   kvstore_proto::Intention intention_;
 

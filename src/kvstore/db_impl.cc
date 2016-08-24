@@ -4,14 +4,15 @@
 DBImpl::DBImpl(zlog::Log *log) :
   log_(log), cache_(this)
 {
-  root_ = Node::Nil();
-  root_pos_ = 0;
+  lcs_ = std::make_shared<NodePtr>(Node::Nil(), false);
+  lcs_->set_csn(0);
+  lcs_->set_read_only();
 
   last_pos_ = 0;
   stop_ = false;
 
   // todo: enable/disable debug
-  validate_rb_tree(root_);
+  validate_rb_tree(lcs_->ref());
 
   log_processor_ = std::thread(&DBImpl::process_log_entry, this);
 }
@@ -165,7 +166,7 @@ void DBImpl::_write_dot(std::ostream& out, NodeRef root,
 
 void DBImpl::write_dot(std::ostream& out, bool scoped)
 {
-  auto root = root_;
+  auto root = lcs_->ref();
   uint64_t nullcount = 0;
   out << "digraph ptree {" << std::endl;
   _write_dot(out, root, nullcount, scoped);
@@ -184,16 +185,16 @@ void DBImpl::write_dot_history(std::ostream& out,
 
     // build sub-graph label
     std::stringstream label;
-    label << "label = \"root: " << (*it)->seq;
+    label << "label = \"root: " << (*it)->root->csn();
     for (const auto& s : (*it)->desc)
       label << "\n" << s;
     label << "\"";
 
     out << "subgraph cluster_" << trees++ << " {" << std::endl;
-    if ((*it)->root == Node::Nil()) {
+    if ((*it)->root->ref() == Node::Nil()) {
       out << "null" << ++nullcount << " [label=nil];" << std::endl;
     } else {
-      _write_dot(out, (*it)->root, nullcount, true);
+      _write_dot(out, (*it)->root->ref(), nullcount, true);
     }
 
 #if 0
@@ -282,7 +283,7 @@ void DBImpl::validate_rb_tree(NodeRef root)
 Transaction *DBImpl::BeginTransaction()
 {
   std::lock_guard<std::mutex> l(lock_);
-  return new TransactionImpl(this, root_, root_pos_, root_id_++);
+  return new TransactionImpl(this, lcs_, root_id_++);
 }
 
 void DBImpl::process_log_entry()
@@ -320,11 +321,15 @@ void DBImpl::process_log_entry()
     // meld-subset: only allow serial intentions
     if (i.snapshot() == -1) assert(next == 0);
     if (i.snapshot() != -1) assert(next > 0);
-    if (i.snapshot() == (int64_t)root_pos_) {
+    if (i.snapshot() == (int64_t)lcs_->csn()) {
       auto root = cache_.CacheIntention(i, next);
       validate_rb_tree(root);
-      root_ = root;
-      root_pos_ = next;
+
+      auto p = std::make_shared<NodePtr>(root, false);
+      p->set_csn(next);
+      p->set_offset(root->field_index());
+      p->set_read_only();
+      lcs_ = p;
 
       root_desc_.clear();
       for (int idx = 0; idx < i.description_size(); idx++)

@@ -16,6 +16,10 @@ using NodeRef = std::shared_ptr<Node>;
  * lets us have confidence in the correctness which is the priority right now.
  * There is probably a lot of overhead always returning copies of the
  * shared_ptr NodeRef.
+ *
+ * TODO: if a NodeRef was stored as nil to indicate that a nil pointer or
+ * perhaps and empty tree then we need an extra way to do this because the ref
+ * might be nil only because it isn't cached, in the general case.
  */
 class NodePtr {
  public:

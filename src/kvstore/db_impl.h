@@ -34,7 +34,7 @@ class DBImpl : public DB {
 
   Snapshot *GetSnapshot() {
     std::lock_guard<std::mutex> l(lock_);
-    return new Snapshot(root_, root_pos_, root_desc_);
+    return new Snapshot(lcs_, root_desc_);
   }
 
   Iterator *NewIterator(Snapshot *snapshot) {
@@ -69,11 +69,9 @@ class DBImpl : public DB {
   void print_node(NodeRef node);
 
   // latest committed state
-  // TODO: things like root_desc_ are properties of the transaction that
-  // created the new root. we should encapsulate this metadata in a structure
-  // rather than having it float around freely here.
-  NodeRef root_;
-  uint64_t root_pos_;
+  std::shared_ptr<NodePtr> lcs_;
+  // TODO: how to represent lcs_ as the empty tree? it could have a nil
+  // pointer ref just because that node isn't cached...
   std::vector<std::string> root_desc_;
 
   std::mutex lock_;

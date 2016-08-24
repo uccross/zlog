@@ -373,7 +373,7 @@ void TransactionImpl::Put(const std::string& key, const std::string& val)
    */
   std::deque<NodeRef> path;
 
-  auto base_root = root_ == nullptr ? src_root_ : root_;
+  auto base_root = root_ == nullptr ? snapshot_->ref() : root_;
   auto root = insert_recursive(path, key, val, base_root);
   if (root == nullptr) {
     /*
@@ -425,7 +425,7 @@ void TransactionImpl::Delete(std::string key)
   ss << "del: " << key;
   description_.emplace_back(ss.str());
 
-  auto base_root = root_ == nullptr ? src_root_ : root_;
+  auto base_root = root_ == nullptr ? snapshot_->ref() : root_;
   auto root = delete_recursive(path, key, base_root);
   if (root == nullptr) {
     return;
@@ -494,7 +494,7 @@ bool TransactionImpl::Commit()
     assert(root_->rid() == rid_);
 
   serialize_intention(root_, field_index);
-  intention_.set_snapshot(snapshot_);
+  intention_.set_snapshot(snapshot_->csn());
 
   for (const auto& s : description_)
     intention_.add_description(s);

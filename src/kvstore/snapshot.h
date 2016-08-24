@@ -7,12 +7,11 @@
 
 class Snapshot {
  public:
-  Snapshot(const NodeRef root, uint64_t seq, std::vector<std::string> desc) :
-    root(root), seq(seq), desc(desc)
+  Snapshot(const std::shared_ptr<NodePtr>& root, std::vector<std::string> desc) :
+    root(root), desc(desc)
   {}
 
-  const NodeRef root;
-  const uint64_t seq;
+  const std::shared_ptr<NodePtr> root;
 
   // TODO: remove in favor of some sort of pointer to this state. for example
   // let's have a special RootNodeRef that has additional metadata or
