@@ -99,15 +99,16 @@ class Node {
 
   // TODO: allow rid to have negative initialization value
   Node(std::string key, std::string val, bool red, NodeRef lr, NodeRef rr,
-      uint64_t rid, int field_index, bool read_only, bool altered) :
+      uint64_t rid, int field_index, bool read_only, bool altered, bool depends) :
     left(lr, read_only), right(rr, read_only), key_(key), val_(val),
     red_(red), rid_(rid), field_index_(field_index), read_only_(read_only),
-    altered_(altered)
+    altered_(altered), depends_(depends)
   {}
 
   static NodeRef& Nil() {
     static NodeRef node = std::make_shared<Node>("", "",
-        false, nullptr, nullptr, (uint64_t)-1, -1, true, false);
+        false, nullptr, nullptr, (uint64_t)-1, -1, true,
+        false, false);
     return node;
   }
 
@@ -116,7 +117,7 @@ class Node {
       return Nil();
 
     auto node = std::make_shared<Node>(src->key(), src->val(), src->red(),
-        src->left.ref(), src->right.ref(), rid, -1, false, false);
+        src->left.ref(), src->right.ref(), rid, -1, false, false, false);
 
     node->left.set_csn(src->left.csn());
     node->left.set_offset(src->left.offset());
@@ -176,14 +177,25 @@ class Node {
     return val_;
   }
 
+  /*
+   * Note that the only caller of this method is a call performing an update
+   * to an existing key-value pair. in this case we set depends_ on to be
+   * true, but in general this may need to change if other set_value callers
+   * are introduced.
+   */
   inline void set_value(const std::string& value) {
     assert(!read_only());
     val_ = value;
     altered_ = true;
+    depends_ = true;
   }
 
   inline bool altered() const {
     return altered_;
+  }
+
+  inline bool depends() const {
+    return depends_;
   }
 
   inline void steal_payload(NodeRef& other) {
@@ -201,6 +213,7 @@ class Node {
   int field_index_;
   bool read_only_;
   bool altered_;
+  bool depends_;
 };
 
 #endif

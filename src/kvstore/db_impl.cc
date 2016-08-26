@@ -136,9 +136,13 @@ void DBImpl::write_dot_recursive(std::ostream& out, uint64_t rid,
   out << "\"" << node.get() << "\" ["
     << "label=\"" << node->key() << "_" << node->val();
   if (node->altered())
-    out << ":m"; // modified
+    out << ":M"; // modified
   else
-    out << ":c"; // clean
+    out << ":m"; // clean
+  if (node->depends())
+    out << "D"; // depends
+  else
+    out << "d"; // doesn't depend
   out << "\",style=filled,"
     << "fillcolor=" << (node->red() ? "red" :
         "black,fontcolor=white")

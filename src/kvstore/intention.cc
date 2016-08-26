@@ -63,6 +63,7 @@ void Intention::serialize_node(kvstore_proto::Node *dst,
   dst->set_key(node->key());
   dst->set_val(node->val());
   dst->set_altered(node->altered());
+  dst->set_depends(node->depends());
 
   assert(node->field_index() == -1);
   // TODO: ideally we could set the field_index when we were
@@ -82,7 +83,7 @@ NodeRef Intention::insert_recursive(std::deque<NodeRef>& path,
 
   if (node == Node::Nil()) {
     auto nn = std::make_shared<Node>(key, val, true, Node::Nil(),
-        Node::Nil(), rid_, -1, false, true);
+        Node::Nil(), rid_, -1, false, true, false);
     path.push_back(nn);
     update = false;
     return nn;

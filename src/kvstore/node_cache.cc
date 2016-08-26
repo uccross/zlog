@@ -58,7 +58,8 @@ NodeRef NodeCache::deserialize_node(const kvstore_proto::Intention& i,
   //
   // TODO: initialize so it can be read-only after creation
   auto nn = std::make_shared<Node>(n.key(), n.val(), n.red(),
-      Node::Nil(), Node::Nil(), pos, index, false, n.altered());
+      Node::Nil(), Node::Nil(), pos, index, false, n.altered(),
+      n.depends());
 
   assert(nn->field_index() == index);
   if (!n.left().nil()) {
