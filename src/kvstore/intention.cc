@@ -75,31 +75,34 @@ void Intention::serialize_node(kvstore_proto::Node *dst,
 }
 
 NodeRef Intention::insert_recursive(std::deque<NodeRef>& path,
-    std::string key, std::string val, const NodeRef& node)
+    std::string key, std::string val, const NodeRef& node, bool& update)
 {
   assert(node != nullptr);
 
   if (node == Node::Nil()) {
     auto nn = std::make_shared<Node>(key, val, true, Node::Nil(), Node::Nil(), rid_, -1, false);
     path.push_back(nn);
+    update = false;
     return nn;
   }
 
   bool less = key < node->key();
   bool equal = !less && key == node->key();
 
-  /*
-   * How should we handle key/value updates? What about when the values are
-   * the same?
-   */
-  if (equal)
-    return nullptr;
+  if (equal) {
+    NodeRef copy;
+    if (node->rid() == rid_)
+      copy = node;
+    else
+      copy = Node::Copy(node, rid_);
+    copy->set_value(val);
+    update = true;
+    return copy;
+  }
 
   auto child = insert_recursive(path, key, val,
-      (less ? node->left.ref() : node->right.ref()));
-
-  if (child == nullptr)
-    return child;
+      (less ? node->left.ref() : node->right.ref()),
+      update);
 
   /*
    * the copy_node operation will copy the child node references, as well as
@@ -381,20 +384,25 @@ void Intention::Put(const std::string& key, const std::string& val)
    */
   std::deque<NodeRef> path;
 
+  bool update;
   auto base_root = root_ == nullptr ? snapshot_->ref() : root_;
-  auto root = insert_recursive(path, key, val, base_root);
-  if (root == nullptr) {
-    /*
-     * this is the update case that is transformed into delete + put. an
-     * optimization would be to 1) use the path constructed here to skip that
-     * step in delete or 2) update the algorithm to handle this case
-     * explicitly.
-     */
-    Delete(key); // first remove the key
-    path.clear(); // new path will be built
-    assert(root_ != nullptr); // delete set the root
-    root = insert_recursive(path, key, val, root_);
-    assert(root != nullptr); // a new root was added
+  auto root = insert_recursive(path, key, val, base_root, update);
+  assert(root != nullptr);
+
+  /*
+   * update is true when the key is already in the tree. in this case the
+   * structure of the tree did not change--a path in the tree was copied--and
+   * we can avoid any rebalancing.
+   */
+  if (update) {
+    std::stringstream ss;
+    ss << "update: " << key;
+    description_.emplace_back(ss.str());
+
+    assert(!root->red());
+    root_ = root;
+
+    return;
   }
 
   std::stringstream ss;

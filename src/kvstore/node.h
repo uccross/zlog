@@ -175,6 +175,11 @@ class Node {
     return val_;
   }
 
+  inline void set_value(const std::string& value) {
+    assert(!read_only());
+    val_ = value;
+  }
+
   inline void steal_payload(NodeRef& other) {
     assert(!read_only());
     assert(!other->read_only());

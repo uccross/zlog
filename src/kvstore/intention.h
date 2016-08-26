@@ -34,7 +34,8 @@ class Intention {
   }
 
   NodeRef insert_recursive(std::deque<NodeRef>& path,
-      std::string key, std::string val, const NodeRef& node);
+      std::string key, std::string val, const NodeRef& node,
+      bool& update);
 
   template<typename ChildA, typename ChildB>
   void insert_balance(NodeRef& parent, NodeRef& nn,
