@@ -62,6 +62,7 @@ void Intention::serialize_node(kvstore_proto::Node *dst,
   dst->set_red(node->red());
   dst->set_key(node->key());
   dst->set_val(node->val());
+  dst->set_altered(node->altered());
 
   assert(node->field_index() == -1);
   // TODO: ideally we could set the field_index when we were
@@ -80,7 +81,8 @@ NodeRef Intention::insert_recursive(std::deque<NodeRef>& path,
   assert(node != nullptr);
 
   if (node == Node::Nil()) {
-    auto nn = std::make_shared<Node>(key, val, true, Node::Nil(), Node::Nil(), rid_, -1, false);
+    auto nn = std::make_shared<Node>(key, val, true, Node::Nil(),
+        Node::Nil(), rid_, -1, false, true);
     path.push_back(nn);
     update = false;
     return nn;
@@ -89,6 +91,8 @@ NodeRef Intention::insert_recursive(std::deque<NodeRef>& path,
   bool less = key < node->key();
   bool equal = !less && key == node->key();
 
+  // this might end up being tricky in the case that updates overlap in the
+  // intention and how to manage and update the relevant metadata.
   if (equal) {
     NodeRef copy;
     if (node->rid() == rid_)

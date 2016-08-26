@@ -17,6 +17,20 @@ message Node {
     required string val = 3;
     required NodePtr left = 4;
     required NodePtr right = 5;
+
+    //
+    // the transaction that generated the intention containing this node
+    // depends on the node having not changed during txn execution.
+    //
+    // false => new nodes
+    // true  => updated nodes
+    // true  => new root after empty tree
+    //
+    //required bool depends = 6;
+
+    // true if the transaction that generated the intention containing this
+    // node altered the node's payload, and false otherwise.
+    required bool altered = 7;
 }
 
 message Intention {
