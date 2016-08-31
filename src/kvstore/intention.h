@@ -65,8 +65,9 @@ class Intention {
   void serialize_node_ptr(kvstore_proto::NodePtr *dst, NodePtr& src,
       const std::string& dir) const;
   void serialize_node(kvstore_proto::Node *dst, NodeRef node,
-      int field_index) const;
-  void serialize_intention(kvstore_proto::Intention& out, NodeRef node, int& field_index);
+      int field_index, bool subtree_ro_dependent) const;
+  void serialize_intention(kvstore_proto::Intention& out, NodeRef node,
+      int& field_index, bool *parent_subtree_ro_dependent = NULL);
 
   void set_intention_self_csn_recursive(uint64_t rid, NodeRef node,
       uint64_t pos);

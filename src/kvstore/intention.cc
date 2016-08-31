@@ -56,14 +56,15 @@ void Intention::serialize_node_ptr(kvstore_proto::NodePtr *dst,
   }
 }
 
-void Intention::serialize_node(kvstore_proto::Node *dst,
-    NodeRef node, int field_index) const
+void Intention::serialize_node(kvstore_proto::Node *dst, NodeRef node,
+    int field_index, bool subtree_ro_dependent) const
 {
   dst->set_red(node->red());
   dst->set_key(node->key());
   dst->set_val(node->val());
   dst->set_altered(node->altered());
   dst->set_depends(node->depends());
+  dst->set_subtree_ro_dependent(subtree_ro_dependent);
 
   assert(node->field_index() == -1);
   // TODO: ideally we could set the field_index when we were
@@ -366,20 +367,28 @@ void Intention::balance_delete(NodeRef extra_black,
     new_node->set_red(false);
 }
 
-void Intention::serialize_intention(kvstore_proto::Intention& out, NodeRef node, int& field_index)
+void Intention::serialize_intention(kvstore_proto::Intention& out,
+    NodeRef node, int& field_index, bool *parent_subtree_ro_dependent)
 {
   assert(node != nullptr);
 
   if (node == Node::Nil() || node->rid() != rid_)
     return;
 
-  serialize_intention(out, node->left.ref(), field_index);
-  serialize_intention(out, node->right.ref(), field_index);
+  // will be set ot false if any descendent node has altered = true
+  bool this_subtree_ro_dependent = true;
+
+  serialize_intention(out, node->left.ref(), field_index, &this_subtree_ro_dependent);
+  serialize_intention(out, node->right.ref(), field_index, &this_subtree_ro_dependent);
 
   // new serialized node in the intention
   kvstore_proto::Node *dst = out.add_tree();
-  serialize_node(dst, node, field_index);
+  serialize_node(dst, node, field_index, this_subtree_ro_dependent);
   field_index++;
+
+  if (parent_subtree_ro_dependent &&
+      (node->altered() || !this_subtree_ro_dependent))
+    *parent_subtree_ro_dependent = false;
 }
 
 void Intention::Put(const std::string& key, const std::string& val)

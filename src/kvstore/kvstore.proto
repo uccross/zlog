@@ -31,6 +31,9 @@ message Node {
     // true if the transaction that generated the intention containing this
     // node altered the node's payload, and false otherwise.
     required bool altered = 7;
+
+    // true iff no descendent node has been altered
+    required bool subtree_ro_dependent = 8;
 }
 
 message Intention {

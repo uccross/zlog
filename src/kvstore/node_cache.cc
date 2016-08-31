@@ -61,6 +61,8 @@ NodeRef NodeCache::deserialize_node(const kvstore_proto::Intention& i,
       Node::Nil(), Node::Nil(), pos, index, false, n.altered(),
       n.depends());
 
+  nn->set_subtree_ro_dependent(n.subtree_ro_dependent());
+
   assert(nn->field_index() == index);
   if (!n.left().nil()) {
     nn->left.set_ref(nullptr);

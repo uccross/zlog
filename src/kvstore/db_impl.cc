@@ -143,6 +143,12 @@ void DBImpl::write_dot_recursive(std::ostream& out, uint64_t rid,
     out << "D"; // depends
   else
     out << "d"; // doesn't depend
+
+  if (node->subtree_ro_dependent())
+    out << "T"; // ro dependent
+  else
+    out << "t"; // not ro dependent
+
   out << "\",style=filled,"
     << "fillcolor=" << (node->red() ? "red" :
         "black,fontcolor=white")

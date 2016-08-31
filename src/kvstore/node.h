@@ -205,6 +205,17 @@ class Node {
     val_ = std::move(other->val_);
   }
 
+  inline bool subtree_ro_dependent() const {
+    assert(subtree_ro_dependent_set_);
+    return subtree_ro_dependent_;
+  }
+
+  inline void set_subtree_ro_dependent(bool val) {
+    assert(!subtree_ro_dependent_set_);
+    subtree_ro_dependent_ = val;
+    subtree_ro_dependent_set_ = true;
+  }
+
  private:
   std::string key_;
   std::string val_;
@@ -214,6 +225,15 @@ class Node {
   bool read_only_;
   bool altered_;
   bool depends_;
+
+  /*
+   * TODO: instead of asserting a _set property like a tri-state variable, we
+   * can lump a bunch together into states that reflect the life cycle of the
+   * node. for instance things that are valid after serialization, or
+   * something along these lines.
+   */
+  bool subtree_ro_dependent_;
+  bool subtree_ro_dependent_set_ = false;
 };
 
 #endif
