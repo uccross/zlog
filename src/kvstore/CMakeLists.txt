@@ -17,7 +17,8 @@ add_library(libkvstore SHARED
 target_link_libraries(libkvstore libzlog kvstore_proto)
 
 add_executable(thrash thrash.cc)
-target_link_libraries(thrash libzlog zlog_seqr libkvstore zlog_seqr)
+target_link_libraries(thrash libzlog zlog_seqr libkvstore zlog_seqr
+    ${Boost_PROGRAM_OPTIONS_LIBRARY})
 
 add_executable(rbt rbt.cc)
 target_link_libraries(rbt libkvstore zlog_seqr)

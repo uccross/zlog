@@ -2,8 +2,11 @@
 #include <iostream>
 #include <iomanip>
 #include <map>
+#include <boost/program_options.hpp>
 #include "zlog/db.h"
 #include "zlog/backend/ram.h"
+
+namespace po = boost::program_options;
 
 #define MAX_KEY 1000
 
@@ -135,6 +138,17 @@ static void test_seek(const std::map<std::string, std::string>& truth,
 
 int main(int argc, char **argv)
 {
+  bool no_del;
+
+  po::options_description desc("Allowed options");
+  desc.add_options()
+    ("no-del", po::bool_switch(&no_del)->default_value(false), "no deletes")
+  ;
+
+  po::variables_map vm;
+  po::store(po::parse_command_line(argc, argv, desc), vm);
+  po::notify(vm);
+
   std::srand(0);
 
   while (1) {
@@ -197,7 +211,7 @@ int main(int argc, char **argv)
       auto txn = db->BeginTransaction();
       while (num_ops--) {
         // flip coin to insert or remove
-        if ((std::rand() % 100) < 75) {
+        if (no_del || ((std::rand() % 100) < 75)) {
           // gen key/value pair to insert/update
           int nkey = (std::rand() % MAX_KEY) + 100; // so there is 0-100 unused
           std::string key = tostr(nkey);
