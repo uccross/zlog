@@ -12,6 +12,16 @@ void NodeCache::ResolveNodePtr(NodePtr& ptr)
     return;
   }
 
+  /*
+   * Resolving nodes into the log is currently disabled because everything is
+   * cached in memory. One challenge of resolving nodes populating their
+   * version number field which isn't store in the log. This is achieved by
+   * storing extra metadata in nodes and pointers that allow a traversal to
+   * find out what the version number is but blindly indexing into the log
+   * won't work as expected.
+   */
+  assert(0);
+
   // the cache sits on top of the database log
   std::string snapshot;
   int ret = db_->log_->Read(ptr.csn(), &snapshot);
@@ -21,7 +31,7 @@ void NodeCache::ResolveNodePtr(NodePtr& ptr)
   assert(i.ParseFromString(snapshot));
   assert(i.IsInitialized());
 
-  auto nn = deserialize_node(i, ptr.csn(), ptr.offset());
+  auto nn = deserialize_node(i, ptr.csn(), ptr.offset(), 0);
 
   assert(nn->read_only());
   nodes_.insert(std::make_pair(
@@ -31,25 +41,28 @@ void NodeCache::ResolveNodePtr(NodePtr& ptr)
 }
 
 NodeRef NodeCache::CacheIntention(const kvstore_proto::Intention& i,
-    uint64_t pos)
+    uint64_t pos, uint64_t& lcs_csn)
 {
   if (i.tree_size() == 0)
     return Node::Nil();
 
   NodeRef nn = nullptr;
   for (int idx = 0; idx < i.tree_size(); idx++) {
-    nn = deserialize_node(i, pos, idx);
+    //std::cerr << "setting vn: prev " << lcs_csn << " vn " << lcs_csn + idx + 1 << std::endl;
+    nn = deserialize_node(i, pos, idx, lcs_csn + idx + 1);
 
     assert(nn->read_only());
     nodes_.insert(std::make_pair(std::make_pair(pos, idx), nn));
   }
+
+  lcs_csn = lcs_csn + i.tree_size();
 
   assert(nn != nullptr);
   return nn; // root is last node in intention
 }
 
 NodeRef NodeCache::deserialize_node(const kvstore_proto::Intention& i,
-    uint64_t pos, int index)
+    uint64_t pos, int index, uint64_t vn)
 {
   const kvstore_proto::Node& n = i.tree(index);
 
@@ -61,7 +74,10 @@ NodeRef NodeCache::deserialize_node(const kvstore_proto::Intention& i,
       Node::Nil(), Node::Nil(), pos, index, false, n.altered(),
       n.depends());
 
+  if (n.has_ssv())
+    nn->set_ssv(n.ssv());
   nn->set_subtree_ro_dependent(n.subtree_ro_dependent());
+  nn->set_vn(vn);
 
   assert(nn->field_index() == index);
   if (!n.left().nil()) {

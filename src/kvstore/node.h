@@ -216,6 +216,37 @@ class Node {
     subtree_ro_dependent_set_ = true;
   }
 
+  inline uint64_t vn() const {
+    assert(vn_ >= 0);
+    return vn_;
+  }
+
+  inline void set_vn(uint64_t vn) {
+    assert(vn_ == -1);
+    vn_ = vn;
+  }
+
+  inline uint64_t ssv() const {
+    assert(ssv_ >= 0);
+    return ssv_;
+  }
+
+  inline bool has_ssv() const {
+    return ssv_ != -1;
+  }
+
+  inline void set_ssv(uint64_t ssv) {
+    assert(!has_ssv());
+    ssv_ = ssv;
+  }
+
+  inline uint64_t nsv() const {
+    if (subtree_ro_dependent())
+      return ssv();
+    else
+      return vn();
+  }
+
  private:
   std::string key_;
   std::string val_;
@@ -225,6 +256,12 @@ class Node {
   bool read_only_;
   bool altered_;
   bool depends_;
+
+  // version number
+  int64_t vn_ = -1;
+
+  // source structure version
+  int64_t ssv_ = -1;
 
   /*
    * TODO: instead of asserting a _set property like a tri-state variable, we

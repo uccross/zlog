@@ -70,9 +70,8 @@ class DBImpl : public DB {
 
   // latest committed state
   std::shared_ptr<NodePtr> lcs_;
-  // TODO: how to represent lcs_ as the empty tree? it could have a nil
-  // pointer ref just because that node isn't cached...
   std::vector<std::string> root_desc_;
+  uint64_t lcs_csn_;
 
   std::mutex lock_;
 

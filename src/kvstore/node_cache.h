@@ -15,7 +15,7 @@ class NodeCache {
   {}
 
   NodeRef CacheIntention(const kvstore_proto::Intention& i,
-      uint64_t pos);
+      uint64_t pos, uint64_t& lcs_csn);
 
  private:
   DBImpl *db_;
@@ -25,7 +25,7 @@ class NodeCache {
   void ResolveNodePtr(NodePtr& ptr);
 
   NodeRef deserialize_node(const kvstore_proto::Intention& i,
-      uint64_t pos, int index);
+      uint64_t pos, int index, uint64_t vn);
 };
 
 #endif

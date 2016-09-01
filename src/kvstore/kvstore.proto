@@ -34,6 +34,9 @@ message Node {
 
     // true iff no descendent node has been altered
     required bool subtree_ro_dependent = 8;
+
+    // source structure version
+    optional int64 ssv = 9;
 }
 
 message Intention {

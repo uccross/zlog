@@ -65,6 +65,8 @@ void Intention::serialize_node(kvstore_proto::Node *dst, NodeRef node,
   dst->set_altered(node->altered());
   dst->set_depends(node->depends());
   dst->set_subtree_ro_dependent(subtree_ro_dependent);
+  if (node->has_ssv())
+    dst->set_ssv(node->ssv());
 
   assert(node->field_index() == -1);
   // TODO: ideally we could set the field_index when we were
@@ -95,12 +97,21 @@ NodeRef Intention::insert_recursive(std::deque<NodeRef>& path,
 
   // this might end up being tricky in the case that updates overlap in the
   // intention and how to manage and update the relevant metadata.
+  //
+  // either this node with an equal key was found in the snapshot, or it was
+  // created by this transaction and updated. if we are making a copy of a
+  // node from the snapshot then we set ssv based on the source node's nsv
+  // value. however if the node is new within this transaction we leave the
+  // ssv undefined, so that case must be handled.
+  //
   if (equal) {
     NodeRef copy;
     if (node->rid() == rid_)
       copy = node;
-    else
+    else {
       copy = Node::Copy(node, rid_);
+      copy->set_ssv(node->nsv());
+    }
     copy->set_value(val);
     update = true;
     return copy;
@@ -119,8 +130,10 @@ NodeRef Intention::insert_recursive(std::deque<NodeRef>& path,
   NodeRef copy;
   if (node->rid() == rid_)
     copy = node;
-  else
+  else {
     copy = Node::Copy(node, rid_);
+    copy->set_ssv(node->nsv());
+  }
 
   if (less)
     copy->left.set_ref(child);
@@ -380,6 +393,20 @@ void Intention::serialize_intention(kvstore_proto::Intention& out,
 
   serialize_intention(out, node->left.ref(), field_index, &this_subtree_ro_dependent);
   serialize_intention(out, node->right.ref(), field_index, &this_subtree_ro_dependent);
+
+  /*
+   * a new node starts off with ssv being undefined--it doesn't have a source.
+   * however later when this node's nsv is referenced, it will return ssv when
+   * its subtree-ro-depdenent flag is set. since the subtree-ro-dependent flag
+   * seems to be a function of the final position of the node in the tree
+   * before serialization, there seems to be a disconnect. perhaps a node that
+   * is "new" or doesn't have an ssv defined returns its vn?
+   */
+#if 0
+  if ((node->left.ref() == Node::Nil() || node->left.ref()->rid() != rid_) &&
+      (node->right.ref() == Node::Nil() || node->right.ref()->rid() != rid_))
+    this_subtree_ro_dependent = false;
+#endif
 
   // new serialized node in the intention
   kvstore_proto::Node *dst = out.add_tree();

@@ -7,6 +7,7 @@ DBImpl::DBImpl(zlog::Log *log) :
   lcs_ = std::make_shared<NodePtr>(Node::Nil(), false);
   lcs_->set_csn(0);
   lcs_->set_read_only();
+  lcs_csn_ = 0;
 
   last_pos_ = 0;
   stop_ = false;
@@ -337,7 +338,8 @@ void DBImpl::process_log_entry()
     if (i.snapshot() == -1) assert(next == 0);
     if (i.snapshot() != -1) assert(next > 0);
     if (i.snapshot() == (int64_t)lcs_->csn()) {
-      auto root = cache_.CacheIntention(i, next);
+      uint64_t lcs_csn = lcs_csn_;
+      auto root = cache_.CacheIntention(i, next, lcs_csn);
       validate_rb_tree(root);
 
       auto p = std::make_shared<NodePtr>(root, false);
@@ -345,6 +347,7 @@ void DBImpl::process_log_entry()
       p->set_offset(root->field_index());
       p->set_read_only();
       lcs_ = p;
+      lcs_csn_ = lcs_csn;
 
       root_desc_.clear();
       for (int idx = 0; idx < i.description_size(); idx++)
