@@ -1,0 +1,316 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Storage Backends &mdash; zlog  documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex/"/>
+        <link rel="search" title="Search" href="../search/"/>
+    <link rel="top" title="zlog  documentation" href="../"/>
+        <link rel="prev" title="Using the API" href="../api/"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../" class="icon icon-home"> zlog
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search/" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../api/">Using the API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api/#key-value-storage-engine">Key-Value Storage Engine</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Storage Backends</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#development-backend">Development Backend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#ceph-and-rados">Ceph and RADOS</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#docker-image-builder">Docker image builder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-from-source">Building from source</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installing-the-ceph-plugin">Installing the Ceph plugin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run-ceph-backed-tests">Run Ceph-backed tests</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../">zlog</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../">Docs</a> &raquo;</li>
+      
+    <li>Storage Backends</li>
+    <li class="wy-breadcrumbs-aside">
+      
+          
+          
+            <a href="https://github.com/noahdesu/zlog/blob/master/doc/storage/index.rst" class="fa fa-github"> Edit on GitHub</a>
+          
+        
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="storage-backends">
+<h1>Storage Backends<a class="headerlink" href="#storage-backends" title="Permalink to this headline">¶</a></h1>
+<p>The development backend is meant for testing and development, and the Ceph
+backend is designed to provide high-performance and reliability.</p>
+<div class="section" id="development-backend">
+<h2>Development Backend<a class="headerlink" href="#development-backend" title="Permalink to this headline">¶</a></h2>
+<p>The development backend is built-in, so there are no special build
+instructions. It is currently limited to single-process test cases. There is
+an open ticket for using LMDB to provide a development backend that will
+support multi-process and sequencer testing (see
+<a class="reference external" href="https://github.com/noahdesu/zlog/issues/108">https://github.com/noahdesu/zlog/issues/108</a>).</p>
+</div>
+<div class="section" id="ceph-and-rados">
+<h2>Ceph and RADOS<a class="headerlink" href="#ceph-and-rados" title="Permalink to this headline">¶</a></h2>
+<p>Running ZLog on Ceph provides high-performance, durability, and scalability.
+In order to use Ceph the ZLog library must be built with Ceph support, and a
+special ZLog plugin loaded into your Ceph cluster.</p>
+<p>The ZLog tree will build with Ceph support automatically if the RADOS
+development packages are installed. Typically this can be accomplished using
+your package manager of choice.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>apt-get install librados-dev
+
+<span class="c1"># or on fedora/rhel/centos:</span>
+yum install -y librados-devel
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Please refer to the <a class="reference external" href="https://ceph.com/docs">Ceph documentation</a> for
+complete instructions on installing Ceph on your platform.</p>
+</div>
+<p>Once the RADOS development package is installed run (or re-run) CMake and
+build. The build system should report that RADOS was found and that the Ceph
+backend will be built.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>cmake .
+<span class="c1"># -- Found LIBRADOS: /usr/lib/librados.so</span>
+<span class="c1"># -- Building Ceph backend /usr/lib/librados.so</span>
+make
+</pre></div>
+</div>
+<p>That&#8217;s it. Now ZLog can communicate with Ceph, but the Ceph plugin still needs
+to be built and installed.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">As of February 2017 work has begun on a Ceph plugin framework that will
+significantly simplify the process of building and installing a Ceph
+plugin. Please get in touch with us if you have any issues with the
+current instructions. Thanks!</p>
+</div>
+<div class="section" id="docker-image-builder">
+<h3>Docker image builder<a class="headerlink" href="#docker-image-builder" title="Permalink to this headline">¶</a></h3>
+<p>Our continuous integration suite always builds the Ceph plugin from scratch
+using a Docker container. This has the added benefit of completely
+documenting the process of how to build the plugin. We recommend first using
+this container to build the plugin. It is currently configured to build with
+Ubuntu, but we can provide additional images on demand (see <a class="reference internal" href="../#community"><span class="std std-ref">Community</span></a>
+to get in touch with us).</p>
+<p>This is an example of how the plugin can be built with the Docker image
+located <a class="reference external" href="https://github.com/noahdesu/zlog/tree/master/docker/ceph-plugin">https://github.com/noahdesu/zlog/tree/master/docker/ceph-plugin</a>.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>mkdir ~/ceph-plugin/
+docker run -v ~/ceph-plugin:/ceph_zlog_plugin zlog/ceph-plugin:latest
+</pre></div>
+</div>
+<p>After running the Docker image a set of <code class="docutils literal"><span class="pre">libcls_zlog.so*</span></code> object files
+should be present in the <code class="docutils literal"><span class="pre">~/ceph-plugin/</span></code> directory.</p>
+</div>
+<div class="section" id="building-from-source">
+<h3>Building from source<a class="headerlink" href="#building-from-source" title="Permalink to this headline">¶</a></h3>
+<p>We would like to avoid duplicating the instructions for building the plugin.
+If you find that the Docker image instructions above do not meet your needs
+please let us know and we can update them or provide instructions to meet your
+specific needs.</p>
+</div>
+<div class="section" id="installing-the-ceph-plugin">
+<h3>Installing the Ceph plugin<a class="headerlink" href="#installing-the-ceph-plugin" title="Permalink to this headline">¶</a></h3>
+<p>The Ceph plugin library needs to be copied onto each OSD in your cluster.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>sudo cp -a ~/ceph-plugin/libcls_zlog.so* /usr/lib/rados-classes
+
+<span class="c1"># or on fedora/rhel/centos</span>
+sudo cp -a ~/ceph-plugin/libcls_zlog.so* /usr/lib64/rados-classes
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If the ZLog plugin is being updated then each OSD needs to be restarted to
+pick-up the new plugin version. Don&#8217;t forget to update &#8216;osd class load
+list&#8217; and &#8216;osd class default list&#8217; in your ceph.conf to allow the ZLog
+plugin to be loaded.</p>
+</div>
+</div>
+<div class="section" id="run-ceph-backed-tests">
+<h3>Run Ceph-backed tests<a class="headerlink" href="#run-ceph-backed-tests" title="Permalink to this headline">¶</a></h3>
+<p>Once everything is setup test out the Ceph backend by running the unit tests.
+You&#8217;ll need to start the ZLog sequencer for these tests.</p>
+<div class="highlight-bash"><div class="highlight"><pre><span></span>zlog-seqr --port <span class="m">5678</span> --streams --daemon
+zlog-test-cls-zlog
+zlog-test-ceph
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="../api/" class="btn btn-neutral" title="Using the API" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright .
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
