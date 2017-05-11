@@ -25,4 +25,7 @@ add_executable(rbt rbt.cc)
 target_link_libraries(rbt libkvstore zlog_seqr)
 
 add_executable(bench bench.cc)
-target_link_libraries(bench libzlog zlog_seqr libkvstore zlog_seqr lmdb)
+target_link_libraries(bench libzlog zlog_seqr libkvstore zlog_seqr lmdb
+    ${Boost_PROGRAM_OPTIONS_LIBRARY}
+    ${Boost_SYSTEM_LIBRARY}
+)
